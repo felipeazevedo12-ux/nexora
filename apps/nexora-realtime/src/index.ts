@@ -6,27 +6,21 @@ import { ChatGateway } from "./gateway/chat.gateway";
 const httpServer = createServer();
 
 const io = new Server(httpServer, {
-cors: {
-origin: "*",
-},
+  cors: {
+    origin: "*",
+  },
 });
 
-const chatGateway =
-new ChatGateway(io);
+const chatGateway = new ChatGateway(io);
 
 io.on("connection", (socket) => {
-chatGateway.handleConnection(socket);
+  chatGateway.handleConnection(socket);
 });
 
-const PORT = 3002;
+const PORT = Number(process.env.PORT) || 3002;
 
-httpServer.listen(
-PORT,
-"0.0.0.0",
-() => {
-console.log("Nexora Realtime");
-console.log(
-`Socket.IO: http://localhost:${PORT}`,
-);
-},
-);
+httpServer.listen(PORT, "0.0.0.0", () => {
+  console.log("Nexora Realtime");
+  console.log(`Socket.IO listening on port ${PORT}`);
+});
+
