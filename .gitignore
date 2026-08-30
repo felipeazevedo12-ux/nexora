@@ -44,3 +44,5 @@ prisma/*.db-journal
 nexora-web-backup/
 # Build output
 dist/
+.vercel
+.env*
