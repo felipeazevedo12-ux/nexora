@@ -1,0 +1,290 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+
+import ServerSidebar from "@/components/layout/ServerSidebar";
+import ChannelSidebar from "@/components/layout/ChannelSidebar";
+import UserPanel from "@/components/layout/UserPanel";
+
+import "@/components/layout/nexora-layout.css";
+
+type Server = {
+id: string;
+name: string;
+};
+
+type Channel = {
+id: string;
+server_id: string;
+name: string;
+type: string;
+created_at: string;
+};
+
+type Message = {
+id: string;
+channel_id: string;
+author_id: string;
+content: string;
+created_at: string;
+users: {
+id: string;
+username: string;
+avatar: string | null;
+};
+};
+
+type User = {
+id: string;
+username: string;
+email: string;
+avatar: string | null;
+};
+
+export default function ChannelPage() {
+const params = useParams();
+
+const serverId = params.serverId as string;
+const channelId = params.channelId as string;
+
+const [servers, setServers] = useState<Server[]>([]);
+const [channels, setChannels] = useState<Channel[]>([]);
+const [channel, setChannel] = useState<Channel | null>(null);
+const [messages, setMessages] = useState<Message[]>([]);
+const [user, setUser] = useState<User | null>(null);
+
+const [message, setMessage] = useState("");
+const [loading, setLoading] = useState(true);
+const [sending, setSending] = useState(false);
+const [error, setError] = useState("");
+
+useEffect(() => {
+async function loadData() {
+try {
+setLoading(true);
+setError("");
+
+```
+    const [
+      serversData,
+      channelsData,
+      channelData,
+      messagesData,
+      userData,
+    ] = await Promise.all([
+      apiFetch("/servers"),
+      apiFetch(`/channels/server/${serverId}`),
+      apiFetch(`/channels/${channelId}`),
+      apiFetch(`/messages/channel/${channelId}`),
+      apiFetch("/users/me"),
+    ]);
+
+    setServers(serversData);
+    setChannels(channelsData);
+    setChannel(channelData);
+    setMessages(messagesData);
+    setUser(userData);
+  } catch (err) {
+    console.error("Erro ao carregar canal:", err);
+    setError("Não foi possível carregar o canal.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+if (serverId && channelId) {
+  loadData();
+}
+```
+
+}, [serverId, channelId]);
+
+async function handleSubmit(
+event: FormEvent<HTMLFormElement>,
+) {
+event.preventDefault();
+
+```
+const content = message.trim();
+
+if (!content || sending) {
+  return;
+}
+
+try {
+  setSending(true);
+  setError("");
+
+  const newMessage = await apiFetch(
+    `/messages/channel/${channelId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        content,
+      }),
+    },
+  );
+
+  setMessages((current) => [
+    ...current,
+    newMessage,
+  ]);
+
+  setMessage("");
+} catch (err) {
+  console.error("Erro ao enviar mensagem:", err);
+  setError("Não foi possível enviar a mensagem.");
+} finally {
+  setSending(false);
+}
+```
+
+}
+
+if (loading) {
+return ( <main className="flex h-screen w-full items-center justify-center bg-[#0b0d10] text-zinc-400">
+Carregando Nexora... </main>
+);
+}
+
+if (!channel || !user) {
+return ( <main className="flex h-screen w-full items-center justify-center bg-[#0b0d10] px-6 text-center text-red-400">
+{error || "Não foi possível carregar esta página."} </main>
+);
+}
+
+const currentServer = servers.find(
+(server) => server.id === serverId,
+);
+
+return ( <main className="flex h-screen w-full overflow-hidden bg-[#111214] text-[#f2f3f5]"> <ServerSidebar
+     servers={servers}
+     activeServerId={serverId}
+   />
+
+```
+  <div className="flex min-w-0 flex-1">
+    <div className="flex w-[240px] shrink-0 flex-col bg-[#18191c]">
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <ChannelSidebar
+          serverId={serverId}
+          serverName={currentServer?.name || "Servidor"}
+          channels={channels}
+          activeChannelId={channelId}
+        />
+      </div>
+
+      <div className="shrink-0">
+        <UserPanel
+          username={user.username}
+          email={user.email}
+        />
+      </div>
+    </div>
+
+    <section className="flex min-w-0 flex-1 flex-col bg-[#111214]">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/10 px-5">
+        <span className="text-2xl font-medium text-zinc-500">
+          #
+        </span>
+
+        <div>
+          <h1 className="text-sm font-bold text-white">
+            {channel.name}
+          </h1>
+
+          <p className="text-xs text-zinc-500">
+            Canal de texto
+          </p>
+        </div>
+      </header>
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+          {messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+              Nenhuma mensagem ainda.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {messages.map((item) => (
+                <article
+                  key={item.id}
+                  className="flex gap-3"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+                    {item.users.username
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-sm font-semibold text-white">
+                        {item.users.username}
+                      </span>
+
+                      <span className="text-xs text-zinc-500">
+                        {new Date(
+                          item.created_at,
+                        ).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-300">
+                      {item.content}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {error && (
+          <div className="px-6 pb-2">
+            <p className="text-sm text-red-400">
+              {error}
+            </p>
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          className="shrink-0 px-6 pb-6"
+        >
+          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#1e1f22] px-4 py-3">
+            <input
+              type="text"
+              value={message}
+              onChange={(event) =>
+                setMessage(event.target.value)
+              }
+              placeholder={`Enviar mensagem em #${channel.name}`}
+              maxLength={2000}
+              disabled={sending}
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+            />
+
+            <button
+              type="submit"
+              disabled={
+                sending || !message.trim()
+              }
+              className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {sending ? "Enviando..." : "Enviar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+
+
+);
+}
+

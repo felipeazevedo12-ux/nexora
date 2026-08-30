@@ -1,0 +1,1 @@
+{"name":"nexora-realtime","private":true,"scripts":{"dev":"tsx src/index.ts","build":"tsc","start":"node dist/index.js"},"dependencies":{"ioredis":"latest","socket.io":"^4.8.3","ws":"latest"},"devDependencies":{"tsx":"^4.23.12"}}
