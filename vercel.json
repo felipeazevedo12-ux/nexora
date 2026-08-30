@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "npx turbo run build --filter=nexora-core",
+  "outputDirectory": "apps/nexora-core/dist",
+  "functions": {
+    "apps/nexora-core/dist/vercel.js": {
+      "runtime": "nodejs24.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/apps/nexora-core/dist/vercel.js"
+    }
+  ]
+}

@@ -42,3 +42,5 @@ prisma/*.db-journal
 
 # Local backup
 nexora-web-backup/
+# Build output
+dist/
